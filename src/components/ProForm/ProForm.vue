@@ -1,9 +1,17 @@
 <script lang="ts" setup>
 import { ArrowDownBold, ArrowUp } from "@element-plus/icons-vue";
-import { ref } from "vue";
-withDefaults(defineProps<{ columns: any }>(), { columns: [] });
+import { ref, reactive } from "vue";
+import { calculateExpandSpanMaxIndex } from "../../utils/utils";
+import "element-plus/theme-chalk/display.css";
+
+const props = withDefaults(defineProps<{ columns: any; span: any }>(), {
+  columns: [],
+  span: { xs: 8, sm: 6, md: 6, lg: 4, xl: 4 },
+});
 
 const isExpand = ref(false);
+const hiddenLayoutIndex = reactive(calculateExpandSpanMaxIndex(props.span));
+console.log(hiddenLayoutIndex)
 </script>
 
 <template>
@@ -11,12 +19,16 @@ const isExpand = ref(false);
     <el-form class="pro_form" label-width="auto">
       <el-row :gutter="40">
         <el-col
-          :xs="8"
-          :sm="6"
-          :md="6"
-          :lg="4"
-          v-for="col in columns"
+          v-bind="span"
+          v-for="(col, index) in columns"
           :key="columns.dataIndex"
+          :class="{
+            'hidden-xl-only': index > hiddenLayoutIndex.lg && !isExpand,
+            'hidden-lg-only': index > hiddenLayoutIndex.lg && !isExpand,
+            'hidden-md-only': index > hiddenLayoutIndex.md && !isExpand,
+            'hidden-sm-only': index > hiddenLayoutIndex.sm && !isExpand,
+            'hidden-xs-and-down': index > hiddenLayoutIndex.xs && !isExpand,
+          }"
         >
           <el-form-item :label="col.title" :name="col.dataIndex">
             <component
