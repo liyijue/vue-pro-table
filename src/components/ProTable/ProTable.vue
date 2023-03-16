@@ -1,22 +1,33 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import type { max } from "lodash";
+import { ref } from "vue";
 import ProForm from "../ProForm/ProForm.vue";
 
-const columns = reactive(
-  Array.from({ length: 10 }, (_, key) => ({
-    title: `xxx${key + 1}`,
-    dataIndex: `xxx${key + 1}`,
-    filedProps: {
-      placeholder: "测试",
-    },
-  }))
+// TODO: any transform interface
+const props = withDefaults(
+  defineProps<{
+    rowkey: string;
+    columns: any;
+    dataSource: any;
+    rowSelection: any;
+  }>(),
+  {
+    columns: [],
+    dataSource: [],
+    rowSelection: null,
+  }
 );
 
-const dataSource = reactive(
-  Array.from({ length: 10 }, (_, key) => ({
-    [`xxx${key + 1}`]: `我是第 ${key + 1} 行`,
-  }))
-);
+const formRef = ref();
+const radioSelectKey = ref(undefined);
+const checkSelectKeys = ref([]);
+
+const handleRadioChange = (row: any) => {
+  radioSelectKey.value = row[props.rowkey];
+};
+const handleSelectChange = (val: []) => {
+  checkSelectKeys.value = val;
+};
 </script>
 
 <template>
@@ -34,7 +45,51 @@ const dataSource = reactive(
         </slot>
       </div>
     </div>
-    <el-table :data="dataSource" style="width: 100%">
+    <el-alert
+      class="select_altert"
+      type="info"
+      :closable="false"
+      v-if="checkSelectKeys.length > 0 && rowSelection?.type === 'checkbox'"
+    >
+      <template #default>
+        <div class="select_altert_content">
+          <slot name="tableAlertRender">
+            <span>{{ `已选择 ${checkSelectKeys.length} 项 ` }}</span>
+          </slot>
+          <slot name="tableAlertOptionRender">
+            <a
+              style="cursor: pointer; font-size: 14px"
+              @click="formRef.clearSelection()"
+              >取消选择
+            </a>
+          </slot>
+        </div>
+      </template>
+    </el-alert>
+    <el-table
+      style="width: 100%"
+      ref="formRef"
+      :data="dataSource"
+      @selection-change="handleSelectChange"
+    >
+      <el-table-column
+        v-if="rowSelection?.type === 'radio'"
+        :width="Math.max(rowSelection?.width, 55)"
+      >
+        <template #default="{ row }">
+          <el-radio
+            :label="row[rowkey]"
+            v-model="radioSelectKey"
+            @change.native.stop="handleRadioChange(row)"
+            >{{ "" }}</el-radio
+          >
+        </template>
+      </el-table-column>
+      <el-table-column
+        v-if="rowSelection?.type === 'checkbox'"
+        type="selection"
+        :width="Math.max(rowSelection?.width, 55)"
+      />
       <el-table-column
         v-for="col in columns"
         :prop="col.dataIndex"
@@ -67,6 +122,14 @@ const dataSource = reactive(
       justify-content: flex-end;
     }
   }
+  .select_altert /deep/ .el-alert__content {
+    width: 100%;
+    .select_altert_content {
+      display: flex;
+      justify-content: space-between;
+    }
+  }
+
   .pro_table_pagination {
     display: flex;
     justify-content: flex-end;
