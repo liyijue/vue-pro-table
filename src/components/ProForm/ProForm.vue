@@ -15,11 +15,17 @@ const isExpand = ref(false);
 const hiddenLayoutIndex = reactive(calculateExpandSpanMaxIndex(props.span));
 const form = reactive<any>({});
 
+const emits = defineEmits<{
+  (e: "reset", formData: typeof form): void;
+  (e: "submit", formData: typeof form): void;
+}>();
+
 const handleReset = () => {
   ruleFormRef.value?.resetFields();
+  emits("reset", form);
 };
 const handleSubmit = () => {
-  console.log(form);
+  emits("submit", form);
 };
 </script>
 

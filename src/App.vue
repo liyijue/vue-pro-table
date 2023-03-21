@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import ProTable from "./components/ProTable/ProTable.vue";
+import { queryString, filterEmpty } from "./utils/utils";
 
 const columns = reactive(
   Array.from({ length: 10 }, (_, key) => ({
@@ -14,22 +15,19 @@ const columns = reactive(
 const dataSource = ref([{ content: 123 }]);
 
 const fetchDataRequest = (
-  data: {
-    pageSize: number;
-    current: number;
-  },
+  data: Record<string, any>,
   callback: (data: any) => void
 ) => {
-  fetch(
-    `http://localhost:8080/list?pageSize=${data.pageSize}&current=${data.current}`,
-    { method: "GET" }
-  )
+  fetch(`http://localhost:8080/list?${queryString(filterEmpty(data))}`, {
+    method: "GET",
+  })
     .then((response) => response.json())
     .then((data) =>
       callback({
         loading: data?.code === 200,
         dataSource: data?.data?.list,
         total: data?.data?.total,
+        current: data?.data?.current,
       })
     );
 };

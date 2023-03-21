@@ -13,3 +13,27 @@ export const calculateExpandSpanMaxIndex = (span: Record<string, number>) => {
 
   return hiddenLayoutIndex
 }
+
+export const queryString = (params: Record<string, any>) => {
+  const keys = Object.keys(params)
+  let qS = ''
+
+  keys.forEach((key, index) => {
+    qS += `${key}=${params[key]}`
+    qS += index === keys.length - 1 ? '' : '&'
+  })
+
+  return qS
+}
+
+export const filterEmpty = (params: Record<string, any>) => {
+  const empty = [undefined, null]
+  const cloneParams = JSON.parse(JSON.stringify(params))
+
+  for (const [k, v] of Object.entries(cloneParams)) {
+    if (empty.includes((v as any))) {
+      delete cloneParams[k]
+    }
+  }
+  return cloneParams
+}

@@ -9,6 +9,7 @@ const props = withDefaults(
     columns: any;
     dataSource?: any;
     total?: number;
+    current?: number;
     rowSelection: any;
   }>(),
   {
@@ -26,23 +27,26 @@ const emits = defineEmits<{
 }>();
 
 const formRef = ref();
+const paginationRef = ref();
 const radioSelectKey = ref(undefined);
 const checkSelectKeys = ref([]);
 const realityTableData = reactive({
   loading: true,
   dataSource: props.dataSource || null,
   total: props.total || null,
+  current: props.current || 0,
 });
 
-const fetchListData = (current = 1) => {
-  emits("request", { pageSize: 10, current }, (response: any) => {
+const fetchListData = ({ current = 1, ...params }) => {
+  emits("request", { pageSize: 10, current, ...params }, (response: any) => {
     realityTableData.dataSource = response?.dataSource;
     realityTableData.total = response?.total;
+    realityTableData.current = response.current;
   });
 };
 
 onMounted(() => {
-  fetchListData();
+  fetchListData({ current: 1 });
 });
 
 const handleRadioChange = (row: any) => {
@@ -52,12 +56,24 @@ const handleSelectChange = (val: []) => {
   checkSelectKeys.value = val;
 };
 const handlePaginChange = (current: number) => {
-  fetchListData(current);
+  fetchListData({ current });
+};
+
+const handleReset = (formData: object = {}) => {
+  fetchListData({ current: 1, ...formData });
+};
+
+const handleSubmit = (formData: object = {}) => {
+  fetchListData({ current: realityTableData.current, ...formData });
 };
 </script>
 
 <template>
-  <pro-form :columns="columns"></pro-form>
+  <pro-form
+    :columns="columns"
+    @reset="handleReset"
+    @submit="handleSubmit"
+  ></pro-form>
   <el-card class="pro_table_container">
     <div class="pro_table_header">
       <div class="left">
@@ -123,9 +139,11 @@ const handlePaginChange = (current: number) => {
       />
     </el-table>
     <el-pagination
+      ref="paginationRef"
       class="pro_table_pagination"
       layout="prev, pager, next"
       :total="realityTableData?.total"
+      :current-page="realityTableData?.current"
       :page-size="10"
       @current-change="handlePaginChange"
     />
