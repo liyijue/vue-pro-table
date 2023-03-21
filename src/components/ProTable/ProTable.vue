@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import type { max } from "lodash";
-import { ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import ProForm from "../ProForm/ProForm.vue";
 
 // TODO: any transform interface
@@ -8,25 +7,52 @@ const props = withDefaults(
   defineProps<{
     rowkey: string;
     columns: any;
-    dataSource: any;
+    dataSource?: any;
+    total?: number;
     rowSelection: any;
   }>(),
   {
     columns: [],
-    dataSource: [],
     rowSelection: null,
   }
 );
 
+const emits = defineEmits<{
+  (
+    e: "request",
+    data: { pageSize: number; current: number },
+    callback: (data: any) => void
+  ): Promise<any>;
+}>();
+
 const formRef = ref();
 const radioSelectKey = ref(undefined);
 const checkSelectKeys = ref([]);
+const realityTableData = reactive({
+  loading: true,
+  dataSource: props.dataSource || null,
+  total: props.total || null,
+});
+
+const fetchListData = (current = 1) => {
+  emits("request", { pageSize: 10, current }, (response: any) => {
+    realityTableData.dataSource = response?.dataSource;
+    realityTableData.total = response?.total;
+  });
+};
+
+onMounted(() => {
+  fetchListData();
+});
 
 const handleRadioChange = (row: any) => {
   radioSelectKey.value = row[props.rowkey];
 };
 const handleSelectChange = (val: []) => {
   checkSelectKeys.value = val;
+};
+const handlePaginChange = (current: number) => {
+  fetchListData(current);
 };
 </script>
 
@@ -69,7 +95,7 @@ const handleSelectChange = (val: []) => {
     <el-table
       style="width: 100%"
       ref="formRef"
-      :data="dataSource"
+      :data="realityTableData?.dataSource"
       @selection-change="handleSelectChange"
     >
       <el-table-column
@@ -99,8 +125,9 @@ const handleSelectChange = (val: []) => {
     <el-pagination
       class="pro_table_pagination"
       layout="prev, pager, next"
-      :total="dataSource.length"
-      :page-size="5"
+      :total="realityTableData?.total"
+      :page-size="10"
+      @current-change="handlePaginChange"
     />
   </el-card>
 </template>
